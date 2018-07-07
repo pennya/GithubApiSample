@@ -6,6 +6,6 @@ package com.duzi.kotlinsample.api.model
 
 data class RepoSearchResponse(
         var totalCount: Int,
-        var items:List<GithubRepo>
+        var items: List<GithubRepo>
 )
 

@@ -7,12 +7,11 @@ import android.preference.PreferenceManager
  * Created by KIM on 2018-07-06.
  */
 
-class AuthTokenProvider(applicationContext: Context) {
+class AuthTokenProvider(private val context: Context) {
 
     companion object {
-        val KEY_AUTH_TOKEN = "AUTH_TOKEN"
+        private val KEY_AUTH_TOKEN = "AUTH_TOKEN"
     }
-    private var context: Context = applicationContext
 
     fun updateToken(token: String) {
         PreferenceManager.getDefaultSharedPreferences(context).edit()
@@ -20,8 +19,8 @@ class AuthTokenProvider(applicationContext: Context) {
                 .apply()
     }
 
-    fun getToken(): String? {
-        return PreferenceManager.getDefaultSharedPreferences(context)
+    // read only
+    val token: String?
+        get() = PreferenceManager.getDefaultSharedPreferences(context)
                 .getString(KEY_AUTH_TOKEN, null)
-    }
 }

@@ -13,7 +13,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         setContentView(R.layout.activity_main)
 
         btnActivityMainSearch.setOnClickListener {
-            startActivity(Intent(this, SearchActivity::class.java))
+            startActivity(Intent(this@MainActivity, SearchActivity::class.java))
         }
 
     }

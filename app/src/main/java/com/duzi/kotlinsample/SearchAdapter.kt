@@ -14,20 +14,19 @@ import kotlinx.android.synthetic.main.item_repository.view.*
 class SearchAdapter(itemClickListener: ItemClickInterface): RecyclerView.Adapter<SearchAdapter.Holder>() {
 
     private var itemClickListener = itemClickListener
-    private var items: List<GithubRepo> = arrayListOf()
+    private var items: MutableList<GithubRepo> = mutableListOf()
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
-        items[position].let {
+        items[position].let { repo ->
             with(holder.itemView) {
-                GlideApp.with(holder.itemView.context)
-                        .load(it.owner.avatar_url)
+                GlideApp.with(context)
+                        .load(repo.owner.avatar_url)
                         .into(ivItemRepositoryProfile)
 
-                tvItemRepositoryName.text = it.name
-                tvItemRepositoryLanguage.text = it.language
-                holder.itemView.setOnClickListener {
-                    itemClickListener.itemClick(items[position])
-                }
+                tvItemRepositoryName.text = repo.name
+                tvItemRepositoryLanguage.text = repo.language
+
+                setOnClickListener { itemClickListener.itemClick(repo) }
             }
         }
     }
@@ -45,7 +44,7 @@ class SearchAdapter(itemClickListener: ItemClickInterface): RecyclerView.Adapter
     }
 
     fun setItems(items: List<GithubRepo>) {
-        this.items = items
+        this.items = items.toMutableList()
     }
 
 }

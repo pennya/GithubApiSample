@@ -7,8 +7,8 @@ package com.duzi.kotlinsample.api.model
 data class GithubRepo (
         var name: String,
         var owner: GithubOwner,
-        var description: String,
-        var language: String,
+        var description: String?,       // nullable
+        var language: String?,          // nullable
         var updated_at: String,
         var stargazers_count: Int
 )

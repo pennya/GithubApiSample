@@ -1,11 +1,10 @@
 package com.duzi.kotlinsample
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.view.View
-import com.duzi.kotlinsample.api.GithubApi
-import com.duzi.kotlinsample.api.GithubApiProvider
 import com.duzi.kotlinsample.api.model.GithubRepo
+import com.duzi.kotlinsample.api.provideGithubApi
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_repository.*
@@ -14,7 +13,7 @@ import java.util.*
 
 class RepositoryActivity : AppCompatActivity() {
 
-    private lateinit var api: GithubApi
+    private val api by lazy { provideGithubApi(this) }
     private val dateFormatInResponse = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault())
     private val dateFormatToShow = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
@@ -27,7 +26,6 @@ class RepositoryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_repository)
 
-        api = GithubApiProvider.provideGithubApi(this)
         val login: String? = intent.getStringExtra(KEY_USER_LOGIN)
         val repo: String? = intent.getStringExtra(KEY_REPO_NAME)
 
@@ -62,8 +60,10 @@ class RepositoryActivity : AppCompatActivity() {
     }
 
     private fun showError(message: String) {
-        tvActivityRepositoryMessage.text = message
-        tvActivityRepositoryMessage.visibility = View.VISIBLE
+        with(tvActivityRepositoryMessage) {
+            text = message
+            visibility = View.VISIBLE
+        }
     }
 
     private fun showRepository(repo: GithubRepo) {

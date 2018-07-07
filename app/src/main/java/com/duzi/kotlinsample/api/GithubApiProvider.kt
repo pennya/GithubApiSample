@@ -14,19 +14,17 @@ import retrofit2.converter.gson.GsonConverterFactory
  * Created by KIM on 2018-07-06.
  */
 
-object GithubApiProvider {
-    fun provideAuthApi(): AuthApi {
-        return Retrofit.Builder()
+fun provideAuthApi(): AuthApi =
+        Retrofit.Builder()
                 .baseUrl("https://github.com/")
                 .client(provideOkHttpClient(provideLoggingInterceptor(), null))
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(AuthApi::class.java)
-    }
 
-    fun provideGithubApi(context: Context): GithubApi {
-        return Retrofit.Builder()
+fun provideGithubApi(context: Context): GithubApi =
+        Retrofit.Builder()
                 .baseUrl("https://api.github.com/")
                 .client(provideOkHttpClient(provideLoggingInterceptor(),
                         provideAuthInterceptor(provideAuthTokenProvider(context))))
@@ -34,42 +32,38 @@ object GithubApiProvider {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(GithubApi::class.java)
-    }
 
-    private fun provideOkHttpClient(interceptor: HttpLoggingInterceptor,
-                            authInterceptor: AuthInterceptor?): OkHttpClient {
-        val b: OkHttpClient.Builder = OkHttpClient.Builder()
-        if(authInterceptor != null) {
-            b.addInterceptor(authInterceptor)
-        }
-        b.addInterceptor(interceptor)
-        return b.build()
-    }
-
-    private fun provideLoggingInterceptor(): HttpLoggingInterceptor {
-        val interceptor = HttpLoggingInterceptor()
-        interceptor.level = HttpLoggingInterceptor.Level.BODY
-        return interceptor
-    }
-
-    private fun provideAuthInterceptor(provider: AuthTokenProvider): AuthInterceptor {
-        provider.getToken().let {
-            return AuthInterceptor(it!!)
-        }
-    }
-
-    private fun provideAuthTokenProvider(context: Context): AuthTokenProvider {
-        return AuthTokenProvider(context.applicationContext)
-    }
-
-    class AuthInterceptor(token: String) : Interceptor {
-        private var token: String = token
-
-        override fun intercept(chain: Interceptor.Chain): Response {
-            val original = chain.request()
-            return chain.proceed(original.newBuilder().addHeader("Authorization", "token " + token).build())
+private fun provideOkHttpClient(interceptor: HttpLoggingInterceptor,
+                                authInterceptor: AuthInterceptor?): OkHttpClient =
+        OkHttpClient.Builder().run {
+            if(authInterceptor != null) {
+                addInterceptor(authInterceptor)
+            }
+            addInterceptor(interceptor)
+            build()
         }
 
-    }
+private fun provideLoggingInterceptor(): HttpLoggingInterceptor =
+        HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
 
+private fun provideAuthInterceptor(provider: AuthTokenProvider): AuthInterceptor {
+    provider.token.let {
+        return AuthInterceptor(it!!)
+    }
 }
+
+private fun provideAuthTokenProvider(context: Context): AuthTokenProvider =
+    AuthTokenProvider(context.applicationContext)
+
+internal class AuthInterceptor(private val token: String) : Interceptor {
+
+    override fun intercept(chain: Interceptor.Chain): Response =
+            with(chain) {
+                val newRequest = request().newBuilder().run {
+                    addHeader("Authorization", "token " + token)
+                    build()
+                }
+                proceed(newRequest)
+            }
+}
+
