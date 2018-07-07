@@ -18,7 +18,7 @@ fun provideAuthApi(): AuthApi =
         Retrofit.Builder()
                 .baseUrl("https://github.com/")
                 .client(provideOkHttpClient(provideLoggingInterceptor(), null))
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.createAsync())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(AuthApi::class.java)
@@ -28,7 +28,7 @@ fun provideGithubApi(context: Context): GithubApi =
                 .baseUrl("https://api.github.com/")
                 .client(provideOkHttpClient(provideLoggingInterceptor(),
                         provideAuthInterceptor(provideAuthTokenProvider(context))))
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.createAsync())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(GithubApi::class.java)

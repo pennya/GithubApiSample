@@ -9,6 +9,8 @@ import android.view.View
 import com.duzi.kotlinsample.api.model.AuthTokenProvider
 import com.duzi.kotlinsample.api.provideAuthApi
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_sign_in.*
 import org.jetbrains.anko.AnkoLogger
@@ -17,6 +19,7 @@ class SignInActivity : AppCompatActivity(), AnkoLogger {
 
     private val api by lazy { provideAuthApi() }
     private val authTokenProvider by lazy { AuthTokenProvider(this) }
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,25 +51,28 @@ class SignInActivity : AppCompatActivity(), AnkoLogger {
         super.onNewIntent(intent)
 
         showProgress()
-
         intent.data.let {
             getAccessToken(it.getQueryParameter("code"))
         }
     }
 
-    private fun getAccessToken(code: String) {
-        showProgress()
+    override fun onDestroy() {
+        compositeDisposable.clear()
+        super.onDestroy()
+    }
 
+    private fun getAccessToken(code: String) {
         api.getAccessToken(BuildConfig.GITHUB_CLIENT_ID, BuildConfig.GITHUB_CLIENT_SECRET, code)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
-                .subscribe(
-                        { result ->
-                            hideProgress()
-                            authTokenProvider.updateToken(result.access_token)
-                            launchMainActivity() },
-                        { error -> error.printStackTrace() }
-                )
+                .doOnSubscribe { showProgress() }
+                .doOnTerminate { hideProgress() }
+                .map { it.access_token }
+                .subscribe({ token ->
+                    authTokenProvider.updateToken(token)
+                    launchMainActivity() })
+                { error -> error.printStackTrace() }
+                .let{ compositeDisposable += it }
     }
 
     private fun launchMainActivity() {

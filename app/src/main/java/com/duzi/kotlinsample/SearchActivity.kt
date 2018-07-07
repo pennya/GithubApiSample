@@ -13,7 +13,10 @@ import android.view.inputmethod.InputMethodManager
 import com.duzi.kotlinsample.api.model.GithubRepo
 import com.duzi.kotlinsample.api.provideGithubApi
 import com.duzi.kotlinsample.callback.ItemClickInterface
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_search.*
 
@@ -23,6 +26,7 @@ class SearchActivity : AppCompatActivity(), ItemClickInterface {
     private lateinit var searchView: SearchView
     private val adapter by lazy { SearchAdapter(this) }
     private val api by lazy { provideGithubApi(this) }
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,34 +74,40 @@ class SearchActivity : AppCompatActivity(), ItemClickInterface {
 
     override fun itemClick(repo: GithubRepo) = moveActivity(repo)
 
+    override fun onDestroy() {
+        compositeDisposable.clear()
+        super.onDestroy()
+    }
 
     private fun updateTitle(query: String) = supportActionBar?.run { subtitle = query }
-
 
     private fun collapseSearchView() = menuSearch.collapseActionView()
 
     private fun searchRepository(query: String) {
-        clearResults()
-        hideError()
-        showProgress()
-
         api.searchRepository(query)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
-                .subscribe(
-                        {r ->
-                            hideProgress()
-                            with(adapter) {
-                                setItems(r.items)
-                                notifyDataSetChanged()
-                            }
-                            if(r.items.isEmpty()) {
-                                println("totalCount = " + r.totalCount)
-                                showError("no data")
-                            }},
-                        {e -> showError("No Successful: " + e.message)}
-                )
-
+                .doOnSubscribe {
+                    clearResults()
+                    hideError()
+                    showProgress()
+                }
+                .doOnTerminate { hideProgress() }
+                .flatMap {
+                    if (it.items.isEmpty()) {
+                        Observable.error(IllegalStateException(""))
+                    } else {
+                        Observable.just(it.items)
+                    }
+                }
+                .subscribe({ items ->
+                    with(adapter) {
+                        setItems(items)
+                        notifyDataSetChanged()
+                    }
+                })
+                {e -> showError("No Successful: " + e.message)}
+                .let { compositeDisposable += it }
     }
 
     private fun clearResults() {

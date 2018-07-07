@@ -6,6 +6,8 @@ import android.view.View
 import com.duzi.kotlinsample.api.model.GithubRepo
 import com.duzi.kotlinsample.api.provideGithubApi
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_repository.*
 import java.text.SimpleDateFormat
@@ -14,6 +16,7 @@ import java.util.*
 class RepositoryActivity : AppCompatActivity() {
 
     private val api by lazy { provideGithubApi(this) }
+    private val compositeDisposable = CompositeDisposable()
     private val dateFormatInResponse = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault())
     private val dateFormatToShow = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
@@ -32,21 +35,23 @@ class RepositoryActivity : AppCompatActivity() {
         if(login != null && repo != null) showRepositoryInfo(login, repo)
     }
 
+    override fun onDestroy() {
+        compositeDisposable.clear()
+        super.onDestroy()
+    }
+
     private fun showRepositoryInfo(login: String, repo: String) {
-        showProgress()
         api.getRepository(login, repo)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
-                .subscribe(
-                        { r ->
-                            hideProgress(true)
-                            showRepository(r)
-                        },
-                        { e ->
-                            e.printStackTrace()
-                            showError("Not successful: " + e.message)
-                        }
-                )
+                .doOnSubscribe { showProgress() }
+                .doOnTerminate { hideProgress(true) }
+                .subscribe({ repo -> showRepository(repo) })
+                { e ->
+                    e.printStackTrace()
+                    showError("Not successful: " + e.message)
+                }
+                .let { compositeDisposable += it }
     }
 
     private fun showProgress() {

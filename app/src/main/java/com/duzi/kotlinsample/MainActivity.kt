@@ -15,6 +15,5 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         btnActivityMainSearch.setOnClickListener {
             startActivity(Intent(this@MainActivity, SearchActivity::class.java))
         }
-
     }
 }
