@@ -3,6 +3,18 @@ Github Api Sample
 This is kotlin sameple to use Github api.
 
 
+Use Library
+============
+RxJava
+RxAndroid
+RxKotlin
+Recyclerview
+CustomTabs
+Anko
+OkHttp
+Glide
+
+
 License
 ============
 Copyright 2018 JI HOON KIM
