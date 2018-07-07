@@ -30,7 +30,7 @@ class SearchActivity : AppCompatActivity(), ItemClickInterface {
 
         with(rvActivitySearchList) {
             layoutManager = LinearLayoutManager(this@SearchActivity)
-            adapter = adapter
+            adapter = this@SearchActivity.adapter
         }
     }
 
