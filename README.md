@@ -5,15 +5,15 @@ This is kotlin sameple to use Github api.
 
 Use Library
 ============
-RxJava2
-RxAndroid
-RxKotlin
-RxBinding2
-Recyclerview
-CustomTabs
-Anko
-OkHttp
-Glide
+1. RxJava2
+2. RxAndroid
+3. RxKotlin
+4. RxBinding2
+5. Recyclerview
+6. CustomTabs
+7. Anko
+8. OkHttp
+9. Glide
 
 
 License
