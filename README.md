@@ -5,9 +5,10 @@ This is kotlin sameple to use Github api.
 
 Use Library
 ============
-RxJava
+RxJava2
 RxAndroid
 RxKotlin
+RxBinding2
 Recyclerview
 CustomTabs
 Anko

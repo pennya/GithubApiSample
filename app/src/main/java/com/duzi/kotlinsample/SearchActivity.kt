@@ -13,6 +13,7 @@ import android.view.inputmethod.InputMethodManager
 import com.duzi.kotlinsample.api.model.GithubRepo
 import com.duzi.kotlinsample.api.provideGithubApi
 import com.duzi.kotlinsample.callback.ItemClickInterface
+import com.jakewharton.rxbinding2.support.v7.widget.queryTextChangeEvents
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -27,6 +28,7 @@ class SearchActivity : AppCompatActivity(), ItemClickInterface {
     private val adapter by lazy { SearchAdapter(this) }
     private val api by lazy { provideGithubApi(this) }
     private val compositeDisposable = CompositeDisposable()
+    private val viewDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,21 +43,20 @@ class SearchActivity : AppCompatActivity(), ItemClickInterface {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_activity_search, menu)
         menuSearch = menu.findItem(R.id.menuAcctivitySearchQuery)
-        searchView = (menuSearch.actionView as SearchView).apply {
-            setOnQueryTextListener(object: SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String): Boolean {
+        searchView = menuSearch.actionView as SearchView
+
+        viewDisposable += searchView.queryTextChangeEvents()
+                .observeOn(AndroidSchedulers.mainThread())
+                .filter { it.isSubmitted }
+                .map { it.queryText() }
+                .filter { it.isNotEmpty() }
+                .map { it.toString() }
+                .subscribe({ query ->
                     updateTitle(query)
                     hideSoftKeyboard()
                     collapseSearchView()
                     searchRepository(query)
-                    return true
-                }
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    return false
-                }
-            })
-        }
+                })
 
         with(menuSearch) {
             setOnActionExpandListener(object: MenuItem.OnActionExpandListener {
@@ -76,6 +77,10 @@ class SearchActivity : AppCompatActivity(), ItemClickInterface {
 
     override fun onDestroy() {
         compositeDisposable.clear()
+
+        // 액티비티가 완전히 종료되고 있는 경우에만 해제
+        // 화면이 꺼지거나 다른 액티비티가 호출하여 액티비티가 화면에서 사라지는 경우에는 해제 X
+        if(isFinishing) viewDisposable.clear()
         super.onDestroy()
     }
 
